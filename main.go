@@ -35,6 +35,7 @@ func main() {
 	api := gin.Default()
 	api.GET("/posts", makeHandler(db, getPosts))
 	api.POST("/posts", makeHandler(db, createPost))
+	api.GET("/posts/:id", makeHandler(db, getPost))
 	api.PUT("/posts/:id", makeHandler(db, updatePost))
 	api.DELETE("/posts/:id", makeHandler(db, deletePost))
 	log.Fatal(api.Run())
