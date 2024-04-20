@@ -14,26 +14,26 @@ type post struct {
 
 func getPosts(db *gorm.DB, c *gin.Context) {
 	posts := []post{}
-	db.Limit(25).Find(&posts)
-	c.JSON(200, posts)
+	if tx := db.Limit(25).Find(&posts); tx.Error != nil {
+		c.Status(500)
+	} else {
+		c.JSON(200, posts)
+	}
 }
 
 func getPostById(db *gorm.DB, id uint) (*post, error) {
 	p := &post{}
-	tx := db.Find(&p, "ID = ?", uint(id))
-	if tx.Error != nil {
+	if tx := db.Find(&p, "ID = ?", uint(id)); tx.Error != nil {
 		return nil, tx.Error
-	}
-	if tx.RowsAffected < 1 {
+	} else if tx.RowsAffected < 1 {
 		return nil, nil
 	}
 	return p, nil
 }
 
 func getPost(db *gorm.DB, c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := parsePostId(c)
 	if err != nil {
-		c.Error(err)
 		return
 	}
 
@@ -52,18 +52,16 @@ func createPost(db *gorm.DB, c *gin.Context) {
 	//todo: validate request
 	newPost := &post{}
 	c.Bind(newPost)
-	tx := db.Model(&post{}).Create(newPost)
-	if tx.Error == nil {
+	if tx := db.Model(&post{}).Create(newPost); tx.Error == nil {
 		c.JSON(201, newPost)
-		return
+	} else {
+		c.Status(500)
 	}
-	c.Status(500)
 }
 
 func updatePost(db *gorm.DB, c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := parsePostId(c)
 	if err != nil {
-		c.Error(err)
 		return
 	}
 	//todo: validate request
@@ -84,14 +82,22 @@ func updatePost(db *gorm.DB, c *gin.Context) {
 	}
 }
 
-func deletePost(db *gorm.DB, c *gin.Context) {
+func parsePostId(c *gin.Context) (uint, error) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.Error(err)
+		return 0, err
+	}
+	return uint(id), nil
+}
+
+func deletePost(db *gorm.DB, c *gin.Context) {
+	id, err := parsePostId(c)
+	if err != nil {
 		return
 	}
 
-	p, _ := getPostById(db, uint(id))
+	p, _ := getPostById(db, id)
 	switch {
 	case p != nil:
 		db.Model(p).Delete(p)

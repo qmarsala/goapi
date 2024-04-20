@@ -30,8 +30,7 @@ func setupDB() *gorm.DB {
 
 	db.AutoMigrate(&post{})
 
-	tx := db.Limit(3).Find(&post{})
-	if tx.RowsAffected < 1 {
+	if tx := db.Limit(3).Find(&post{}); tx.RowsAffected < 1 {
 		for _, p := range []post{
 			{Message: "Hello!"},
 			{Message: "Hello, Go!"},

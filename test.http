@@ -8,7 +8,7 @@ Accept: application/json
 
 ###
 
-PUT http://localhost:8080/posts/2
+PUT http://localhost:8080/posts/7
 Content-Type: application/json
 Accept: application/json
 
@@ -24,6 +24,6 @@ Accept: application/json
 
 ###
 
-DELETE http://localhost:8080/posts/4
+DELETE http://localhost:8080/posts/5
 Content-Type: application/json
 Accept: application/json
