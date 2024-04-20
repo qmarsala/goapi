@@ -1,9 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
-	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -15,15 +16,26 @@ func main() {
 		panic("failed to connect database")
 	}
 
-	db.AutoMigrate(&Page{})
+	db.AutoMigrate(&post{})
 
-	db.Create(&Page{
-		Title:   "test",
-		Content: "This is a test page!",
-	})
+	for _, p := range []post{
+		{Message: "Hello!"},
+		{Message: "Hello, Go!"},
+		{Message: "Hello, World!"},
+	} {
+		tx := db.Model(&post{}).Create(&p)
+		fmt.Println(tx.Error)
+	}
 
-	http.HandleFunc("/view/", makeHandler(db, viewHandler))
-	http.HandleFunc("/edit/", makeHandler(db, editHandler))
-	http.HandleFunc("/save/", makeHandler(db, saveHandler))
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	posts := []post{}
+	db.Limit(10).Find(&posts)
+
+	fmt.Println(posts)
+
+	api := gin.Default()
+	api.GET("/posts", makeHandler(db, getPosts))
+	api.POST("/posts", makeHandler(db, createPost))
+	api.PUT("/posts/:id", makeHandler(db, updatePost))
+	api.DELETE("/posts/:id", makeHandler(db, deletePost))
+	log.Fatal(api.Run())
 }
