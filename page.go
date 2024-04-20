@@ -10,14 +10,32 @@ type Page struct {
 	Content string
 }
 
-// todo: handle errors
-func loadPage(db *gorm.DB, title string) *Page {
+func loadPage(db *gorm.DB, title string) (*Page, error) {
 	page := Page{}
-	db.First(&page, "Title = ?", title)
-	return &page
+	tx := db.First(&page, "Title = ?", title)
+	return &page, tx.Error
 }
 
-func updatePage(db *gorm.DB, title string, content string) {
-	p := loadPage(db, title)
-	db.Model(p).Update("Content", content)
+func createPage(db *gorm.DB, title string, content string) (*Page, error) {
+	p := &Page{Title: title, Content: content}
+	tx := db.Create(p)
+	return p, tx.Error
+}
+
+func updatePage(db *gorm.DB, title string, content string) (*Page, error) {
+	p, err := loadPage(db, title)
+	if err != nil {
+		return nil, err
+	}
+	tx := db.Model(p).Update("Content", content)
+	return &Page{p.Model, p.Title, content}, tx.Error
+}
+
+func deletePage(db *gorm.DB, title string) error {
+	p, err := loadPage(db, title)
+	if err != nil {
+		return err
+	}
+	db.Delete(&p)
+	return nil
 }
