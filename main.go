@@ -11,26 +11,7 @@ import (
 
 // todo: add error handling back
 func main() {
-	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
-	if err != nil {
-		panic("failed to connect database")
-	}
-
-	db.AutoMigrate(&post{})
-
-	for _, p := range []post{
-		{Message: "Hello!"},
-		{Message: "Hello, Go!"},
-		{Message: "Hello, World!"},
-	} {
-		tx := db.Model(&post{}).Create(&p)
-		fmt.Println(tx.Error)
-	}
-
-	posts := []post{}
-	db.Limit(10).Find(&posts)
-
-	fmt.Println(posts)
+	db := setupDB()
 
 	api := gin.Default()
 	api.GET("/posts", makeHandler(db, getPosts))
@@ -39,4 +20,26 @@ func main() {
 	api.PUT("/posts/:id", makeHandler(db, updatePost))
 	api.DELETE("/posts/:id", makeHandler(db, deletePost))
 	log.Fatal(api.Run())
+}
+
+func setupDB() *gorm.DB {
+	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+	if err != nil {
+		panic("failed to connect database")
+	}
+
+	db.AutoMigrate(&post{})
+
+	tx := db.Limit(3).Find(&post{})
+	if tx.RowsAffected < 1 {
+		for _, p := range []post{
+			{Message: "Hello!"},
+			{Message: "Hello, Go!"},
+			{Message: "Hello, World!"},
+		} {
+			tx := db.Model(&post{}).Create(&p)
+			fmt.Println(tx.Error)
+		}
+	}
+	return db
 }

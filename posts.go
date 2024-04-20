@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -50,12 +49,18 @@ func getPost(db *gorm.DB, c *gin.Context) {
 }
 
 func createPost(db *gorm.DB, c *gin.Context) {
-	p := &post{Message: "test"}
-	c.JSON(201, p)
+	//todo: validate request
+	newPost := &post{}
+	c.Bind(newPost)
+	tx := db.Model(&post{}).Create(newPost)
+	if tx.Error == nil {
+		c.JSON(201, newPost)
+		return
+	}
+	c.Status(500)
 }
 
 func updatePost(db *gorm.DB, c *gin.Context) {
-	fmt.Println(c.Request)
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.Error(err)
@@ -82,7 +87,20 @@ func updatePost(db *gorm.DB, c *gin.Context) {
 }
 
 func deletePost(db *gorm.DB, c *gin.Context) {
-	c.Status(204)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	p, _ := getPostById(db, uint(id))
+	switch {
+	case p != nil:
+		db.Model(p).Delete(p)
+		c.Status(204)
+	default:
+		c.Status(404)
+	}
 }
 
 func makeHandler(db *gorm.DB, fn func(*gorm.DB, *gin.Context)) func(*gin.Context) {

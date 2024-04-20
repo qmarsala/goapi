@@ -1,3 +1,13 @@
+POST http://localhost:8080/posts/
+Content-Type: application/json
+Accept: application/json
+
+{
+    "Message": "Testing api!!"
+}
+
+###
+
 PUT http://localhost:8080/posts/2
 Content-Type: application/json
 Accept: application/json
@@ -8,6 +18,12 @@ Accept: application/json
 
 ###
 
-GET http://localhost:8080/posts/2
+GET http://localhost:8080/posts/
+Content-Type: application/json
+Accept: application/json
+
+###
+
+DELETE http://localhost:8080/posts/4
 Content-Type: application/json
 Accept: application/json
