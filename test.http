@@ -1,0 +1,13 @@
+PUT http://localhost:8080/posts/2
+Content-Type: application/json
+Accept: application/json
+
+{
+    "Message": "Testing api!!"
+}
+
+###
+
+GET http://localhost:8080/posts/2
+Content-Type: application/json
+Accept: application/json
