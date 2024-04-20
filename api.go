@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"html/template"
 	"net/http"
 	"regexp"
@@ -21,12 +22,12 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 }
 
 func viewHandler(db *gorm.DB, w http.ResponseWriter, r *http.Request, title string) {
-	p := loadPage(db, title)
+	p, _ := loadPage(db, title)
 	renderTemplate(w, "view", p)
 }
 
 func editHandler(db *gorm.DB, w http.ResponseWriter, r *http.Request, title string) {
-	p := loadPage(db, title)
+	p, _ := loadPage(db, title)
 	renderTemplate(w, "edit", p)
 }
 
@@ -51,6 +52,8 @@ func makeHandler(db *gorm.DB, fn func(*gorm.DB, http.ResponseWriter, *http.Reque
 		if err != nil {
 			return
 		}
+		fmt.Printf("requested: %s\n", r.URL.Path)
 		fn(db, w, r, title)
+		fmt.Println("done")
 	}
 }
