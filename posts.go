@@ -66,24 +66,22 @@ func updatePost(db *gorm.DB, c *gin.Context) {
 		c.Error(err)
 		return
 	}
-
+	//todo: validate request
+	update := &post{}
+	c.Bind(update)
 	p, err := getPostById(db, uint(id))
-	if p != nil {
-		update := &post{}
-		c.Bind(update)
-		//todo: validate request
-		tx := db.Model(p).UpdateColumns(update)
-		if tx.Error == nil {
+	switch {
+	case p != nil:
+		if tx := db.Model(p).UpdateColumns(update); tx.Error == nil {
 			c.JSON(200, p)
 		} else {
 			c.Status(500)
 		}
-	}
-	if err != nil {
+	case err != nil:
 		c.Status(500)
-		return
+	default:
+		c.Status(404)
 	}
-	c.Status(404)
 }
 
 func deletePost(db *gorm.DB, c *gin.Context) {
