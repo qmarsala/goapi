@@ -5,8 +5,10 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"os"
 	"regexp"
+
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 var templates = template.Must(template.ParseFiles("edit.html", "view.html"))
@@ -21,25 +23,20 @@ func (e TestError) Error() string {
 }
 
 type Page struct {
+	gorm.Model
 	Title string
 	Body  []byte
 }
 
-func (p *Page) save() error {
-	filename := p.Title + ".txt"
-	return os.WriteFile(filename, p.Body, 0600)
+func (p *Page) save(db *gorm.DB) {
+	db.Model(p).Update("Title", p.Title)
+	db.Model(p).Update("Body", p.Body)
 }
 
-func loadPage(title string) (*Page, error) {
-	filename := title + ".txt"
-	body, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-	return &Page{
-		Title: title,
-		Body:  body,
-	}, nil
+func loadPage(db *gorm.DB, title string) *Page {
+	page := Page{}
+	db.First(&page, "Title = ?", title)
+	return &page
 }
 
 func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
@@ -51,35 +48,21 @@ func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
 	return m[2], nil
 }
 
-func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
-	title, err := getTitle(w, r)
-	if err != nil {
-		return
-	}
-	p, err := loadPage(title)
-	if err != nil {
-		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
-		return
-	}
+func viewHandler(db *gorm.DB, w http.ResponseWriter, r *http.Request, title string) {
+	p := loadPage(db, title)
 	renderTemplate(w, "view", p)
 }
 
-func editHandler(w http.ResponseWriter, r *http.Request, title string) {
-	p, err := loadPage(title)
-	if err != nil {
-		p = &Page{Title: title}
-	}
+func editHandler(db *gorm.DB, w http.ResponseWriter, r *http.Request, title string) {
+	p := loadPage(db, title)
 	renderTemplate(w, "edit", p)
 }
 
-func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
+func saveHandler(db *gorm.DB, w http.ResponseWriter, r *http.Request, title string) {
 	body := r.FormValue("body")
-	p := &Page{Title: title, Body: []byte(body)}
-	err := p.save()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	p := loadPage(db, title)
+	p.Body = []byte(body)
+	p.save(db)
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
 }
 
@@ -91,19 +74,32 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 	}
 }
 
-func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
+func makeHandler(db *gorm.DB, fn func(*gorm.DB, http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		title, err := getTitle(w, r)
 		if err != nil {
 			return
 		}
-		fn(w, r, title)
+		fn(db, w, r, title)
 	}
 }
 
+// todo: add error handling back
 func main() {
-	http.HandleFunc("/view/", makeHandler(viewHandler))
-	http.HandleFunc("/edit/", makeHandler(editHandler))
-	http.HandleFunc("/save/", makeHandler(saveHandler))
+	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+	if err != nil {
+		panic("failed to connect database")
+	}
+
+	db.AutoMigrate(&Page{})
+
+	db.Create(&Page{
+		Title: "test",
+		Body:  []byte("This is a test page!"),
+	})
+
+	http.HandleFunc("/view/", makeHandler(db, viewHandler))
+	http.HandleFunc("/edit/", makeHandler(db, editHandler))
+	http.HandleFunc("/save/", makeHandler(db, saveHandler))
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
