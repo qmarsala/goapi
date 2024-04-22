@@ -16,6 +16,15 @@ type post struct {
 	Message string `json:"message"`
 }
 
+func parsePostId(c *gin.Context) (uint, error) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.Error(err)
+		return 0, err
+	}
+	return uint(id), nil
+}
+
 func getPostById(db *gorm.DB, id uint) (*post, error) {
 	p := &post{}
 	if tx := db.Find(&p, "ID = ?", uint(id)); tx.Error != nil {
@@ -87,15 +96,6 @@ func updatePost(db *gorm.DB, c *gin.Context) {
 	default:
 		c.Status(404)
 	}
-}
-
-func parsePostId(c *gin.Context) (uint, error) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err != nil {
-		c.Error(err)
-		return 0, err
-	}
-	return uint(id), nil
 }
 
 func deletePost(db *gorm.DB, c *gin.Context) {
