@@ -87,7 +87,7 @@ func updatePost(db *gorm.DB, c *gin.Context) {
 	switch {
 	case p != nil:
 		if tx := db.Model(p).UpdateColumns(update); tx.Error == nil {
-			c.JSON(200, p)
+			c.JSON(200, update)
 		} else {
 			c.Status(500)
 		}

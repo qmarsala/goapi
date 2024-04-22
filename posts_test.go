@@ -1,5 +1,7 @@
 package main
 
+// functions to create reqs with content type set correctly
+
 import (
 	"bytes"
 	"encoding/json"
@@ -157,6 +159,43 @@ func TestDeletePost(t *testing.T) {
 		if tx.RowsAffected > 0 {
 			t.Error("expected not to find post, but found post in db ")
 			testDb.Model(testPost).Delete(testPost)
+		}
+	})
+}
+
+func TestUpdatePost(t *testing.T) {
+	rPath := "/posts/:id"
+	router := gin.Default()
+	router.PUT(rPath, makeHandler(testDb, updatePost))
+	testId := uint(2000)
+	testPost := post{
+		ID:      testId,
+		Message: "To Be Updated",
+	}
+	testDb.Model(testPost).Create(&testPost)
+	defer testDb.Model(testPost).Delete(testPost)
+
+	updateMessage := "I am updated!"
+	updatedPost := post{
+		ID:      testId,
+		Message: updateMessage,
+	}
+	bodyBytes, _ := json.Marshal(updatedPost)
+	req, _ := http.NewRequest("PUT", fmt.Sprintf("/posts/%d", testId), bytes.NewBuffer(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, req)
+
+	t.Run("Returns 200 status code", func(t *testing.T) {
+		if recorder.Code != 200 {
+			t.Error("Expected 200, got ", recorder.Code)
+		}
+	})
+	t.Run("Post is updated", func(t *testing.T) {
+		toBeUpdated := post{ID: testId}
+		testDb.Model(post{}).Find(&toBeUpdated)
+		if toBeUpdated.Message != updateMessage {
+			t.Error("expected message to be updated in database, got ", toBeUpdated.Message)
 		}
 	})
 }
