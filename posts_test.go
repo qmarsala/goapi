@@ -131,3 +131,32 @@ func TestCreatePost(t *testing.T) {
 		}
 	})
 }
+
+func TestDeletePost(t *testing.T) {
+	rPath := "/posts/:id"
+	router := gin.Default()
+	router.DELETE(rPath, makeHandler(testDb, deletePost))
+	testId := uint(1000)
+	testPost := post{
+		ID:      testId,
+		Message: "To Be Deleted",
+	}
+	testDb.Model(testPost).Create(&testPost)
+
+	req, _ := http.NewRequest("DELETE", fmt.Sprintf("/posts/%d", testId), nil)
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, req)
+
+	t.Run("Returns 204 status code", func(t *testing.T) {
+		if recorder.Code != 204 {
+			t.Error("Expected 204, got ", recorder.Code)
+		}
+	})
+	t.Run("Post is deleted", func(t *testing.T) {
+		tx := testDb.Model(testPost).Find(&testPost)
+		if tx.RowsAffected > 0 {
+			t.Error("expected not to find post, but found post in db ")
+			testDb.Model(testPost).Delete(testPost)
+		}
+	})
+}
