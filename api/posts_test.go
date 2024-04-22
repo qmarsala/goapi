@@ -191,6 +191,13 @@ func TestUpdatePost(t *testing.T) {
 			t.Error("Expected 200, got ", recorder.Code)
 		}
 	})
+	t.Run("updated post is returned", func(t *testing.T) {
+		var responseBody post
+		json.Unmarshal(recorder.Body.Bytes(), &responseBody)
+		if responseBody.Message != updateMessage {
+			t.Error("expected message to be updated in database, got ", responseBody.Message)
+		}
+	})
 	t.Run("Post is updated", func(t *testing.T) {
 		toBeUpdated := post{ID: testId}
 		testDb.Model(post{}).Find(&toBeUpdated)
