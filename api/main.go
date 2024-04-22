@@ -13,11 +13,12 @@ import (
 func main() {
 	db := initializeDB()
 	api := gin.Default()
-	api.GET("/posts", makeHandler(db, getPosts))
-	api.POST("/posts", makeHandler(db, createPost))
-	api.GET("/posts/:id", makeHandler(db, getPost))
-	api.PUT("/posts/:id", makeHandler(db, updatePost))
-	api.DELETE("/posts/:id", makeHandler(db, deletePost))
+
+	api.GET("/api/posts", makeHandler(db, getPosts))
+	api.POST("/api/posts", makeHandler(db, createPost))
+	api.GET("/api/posts/:id", makeHandler(db, getPost))
+	api.PUT("/api/posts/:id", makeHandler(db, updatePost))
+	api.DELETE("/api/posts/:id", makeHandler(db, deletePost))
 	log.Fatal(api.Run())
 }
 
