@@ -41,10 +41,10 @@ function Post() {
 
     const updatePost = id => {
         const post = Posts.find(post => post.id === id);
-        fetch(`http://localhost:8080/api/posts/${id}`, {
+        fetch(`http://localhost:8080/api/posts/${post.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...post })
+            body: JSON.stringify({ id: post.id, message: editText })
         })
             .then(response => response.json())
             .then(updatedPost => {
