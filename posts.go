@@ -7,18 +7,13 @@ import (
 	"gorm.io/gorm"
 )
 
+type PostsResponse struct {
+	Posts []post `json:"posts"`
+}
+
 type post struct {
 	ID      uint   `json:"id" gorm:"primarykey"`
 	Message string `json:"message"`
-}
-
-func getPosts(db *gorm.DB, c *gin.Context) {
-	posts := []post{}
-	if tx := db.Limit(25).Find(&posts); tx.Error != nil {
-		c.Status(500)
-	} else {
-		c.JSON(200, posts)
-	}
 }
 
 func getPostById(db *gorm.DB, id uint) (*post, error) {
@@ -31,9 +26,20 @@ func getPostById(db *gorm.DB, id uint) (*post, error) {
 	return p, nil
 }
 
+func getPosts(db *gorm.DB, c *gin.Context) {
+	posts := []post{}
+	if tx := db.Limit(25).Find(&posts); tx.Error != nil {
+		c.Status(500)
+	} else {
+		c.JSON(200, &PostsResponse{Posts: posts})
+	}
+}
+
 func getPost(db *gorm.DB, c *gin.Context) {
 	id, err := parsePostId(c)
 	if err != nil {
+		//todo: how to return better response
+		c.Status(400)
 		return
 	}
 
@@ -62,6 +68,7 @@ func createPost(db *gorm.DB, c *gin.Context) {
 func updatePost(db *gorm.DB, c *gin.Context) {
 	id, err := parsePostId(c)
 	if err != nil {
+		c.Status(400)
 		return
 	}
 	//todo: validate request
@@ -94,6 +101,7 @@ func parsePostId(c *gin.Context) (uint, error) {
 func deletePost(db *gorm.DB, c *gin.Context) {
 	id, err := parsePostId(c)
 	if err != nil {
+		c.Status(404)
 		return
 	}
 
