@@ -38,6 +38,28 @@ func cleanupSeedDB(posts []post) {
 	}
 }
 
+func createJsonRequest(method string, path string, requestObj interface{}) (*http.Request, error) {
+	bodyBytes, _ := json.Marshal(requestObj)
+	if req, err := http.NewRequest(method, path, bytes.NewBuffer(bodyBytes)); err != nil {
+		return nil, err
+	} else {
+		req.Header.Set("Content-Type", "application/json")
+		return req, nil
+	}
+}
+
+func readPostsResponse(bytes []byte) *PostsResponse {
+	responseBody := &PostsResponse{}
+	json.Unmarshal(bytes, responseBody)
+	return responseBody
+}
+
+func readPost(bytes []byte) *post {
+	responseBody := &post{}
+	json.Unmarshal(bytes, responseBody)
+	return responseBody
+}
+
 func TestMain(t *testing.M) {
 	testDb = connectDB("test")
 	posts := []post{
@@ -67,10 +89,9 @@ func TestGetPosts(t *testing.T) {
 	})
 
 	t.Run("Returns list of posts", func(t *testing.T) {
-		var body PostsResponse
-		json.Unmarshal(recorder.Body.Bytes(), &body)
-		if len(body.Posts) < 1 {
-			t.Error("Expected at least 1 post, got 0 ", body.Posts)
+		postsResponse := readPostsResponse(recorder.Body.Bytes())
+		if len(postsResponse.Posts) < 1 {
+			t.Error("Expected at least 1 post, got 0 ", postsResponse.Posts)
 		}
 	})
 }
@@ -91,13 +112,12 @@ func TestGetPost(t *testing.T) {
 	})
 
 	t.Run("Returns post", func(t *testing.T) {
-		var body post
-		json.Unmarshal(recorder.Body.Bytes(), &body)
-		if len(body.Message) < 1 {
-			t.Error("Expected post with a message, message is empty ", body.Message)
+		post := readPost(recorder.Body.Bytes())
+		if len(post.Message) < 1 {
+			t.Error("Expected post with a message, message is empty ", post.Message)
 		}
-		if body.ID < 1 {
-			t.Error("Expected post with an ID, ID is 0 ", body.Message)
+		if post.ID < 1 {
+			t.Error("Expected post with an ID, ID is 0 ", post.Message)
 		}
 	})
 }
@@ -109,15 +129,12 @@ func TestCreatePost(t *testing.T) {
 	rPost := post{
 		Message: "Testing Create Post",
 	}
-	bodyBytes, _ := json.Marshal(rPost)
-	req, _ := http.NewRequest("POST", rPath, bytes.NewBuffer(bodyBytes))
-	req.Header.Set("Content-Type", "application/json")
+	req, _ := createJsonRequest("POST", rPath, rPost)
 	recorder := httptest.NewRecorder()
 
 	router.ServeHTTP(recorder, req)
-	var body post
-	json.Unmarshal(recorder.Body.Bytes(), &body)
-	defer testDb.Model(body).Delete(body)
+	post := readPost(recorder.Body.Bytes())
+	defer testDb.Model(post).Delete(post)
 
 	t.Run("Returns 201 status code", func(t *testing.T) {
 		if recorder.Code != 201 {
@@ -125,11 +142,11 @@ func TestCreatePost(t *testing.T) {
 		}
 	})
 	t.Run("Returns post", func(t *testing.T) {
-		if len(body.Message) < 1 {
-			t.Error("Expected post with a message, message is empty ", body.Message)
+		if post.Message != rPost.Message {
+			t.Error("Expected message to match request, got ", post.Message)
 		}
-		if body.ID < 1 {
-			t.Error("Expected post with an ID, ID is 0 ", body.ID)
+		if post.ID < 1 {
+			t.Error("Expected post with an ID, ID is 0 ", post.ID)
 		}
 	})
 }
@@ -180,9 +197,7 @@ func TestUpdatePost(t *testing.T) {
 		ID:      testId,
 		Message: updateMessage,
 	}
-	bodyBytes, _ := json.Marshal(updatedPost)
-	req, _ := http.NewRequest("PUT", fmt.Sprintf("/posts/%d", testId), bytes.NewBuffer(bodyBytes))
-	req.Header.Set("Content-Type", "application/json")
+	req, _ := createJsonRequest("PUT", fmt.Sprintf("/posts/%d", testId), updatedPost)
 	recorder := httptest.NewRecorder()
 	router.ServeHTTP(recorder, req)
 
@@ -192,10 +207,9 @@ func TestUpdatePost(t *testing.T) {
 		}
 	})
 	t.Run("updated post is returned", func(t *testing.T) {
-		var responseBody post
-		json.Unmarshal(recorder.Body.Bytes(), &responseBody)
-		if responseBody.Message != updateMessage {
-			t.Error("expected message to be updated in database, got ", responseBody.Message)
+		responsePost := readPost(recorder.Body.Bytes())
+		if responsePost.Message != updateMessage {
+			t.Error("expected message to be updated in database, got ", responsePost.Message)
 		}
 	})
 	t.Run("Post is updated", func(t *testing.T) {
