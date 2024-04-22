@@ -65,9 +65,9 @@ func getPost(db *gorm.DB, c *gin.Context) {
 
 func createPost(db *gorm.DB, c *gin.Context) {
 	//todo: validate request
-	newPost := &post{}
-	c.Bind(newPost)
-	if tx := db.Model(&post{}).Create(newPost); tx.Error == nil {
+	newPost := post{}
+	c.Bind(&newPost)
+	if tx := db.Model(&post{}).Create(&newPost); tx.Error == nil {
 		c.JSON(201, newPost)
 	} else {
 		c.Status(500)
