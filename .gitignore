@@ -19,5 +19,5 @@
 
 # Go workspace file
 go.work
-test.db
+*.db
 .vscode/launch.json

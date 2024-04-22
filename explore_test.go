@@ -19,7 +19,6 @@ func seedDB(posts []post) []post {
 	createdPosts := []post{}
 	for _, p := range posts {
 		tx := testDb.Model(post{}).Create(&p)
-		fmt.Println(p.ID)
 		createdPosts = append(createdPosts, p)
 		if tx.Error != nil {
 			fmt.Println(tx.Error)
@@ -30,7 +29,6 @@ func seedDB(posts []post) []post {
 
 func cleanupSeedDB(posts []post) {
 	for _, p := range posts {
-		fmt.Println(p.ID)
 		tx := testDb.Model(p).Delete(p)
 		if tx.Error != nil {
 			fmt.Println(tx.Error)
@@ -39,7 +37,7 @@ func cleanupSeedDB(posts []post) {
 }
 
 func TestMain(t *testing.M) {
-	testDb = initializeDB()
+	testDb = connectDB("test")
 	posts := []post{
 		{ID: 1, Message: "Hello!"},
 		{ID: 2, Message: "Hello, Go!"},
