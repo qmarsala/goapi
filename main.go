@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -21,13 +22,13 @@ func main() {
 }
 
 func initializeDB() *gorm.DB {
-	db := connectDB()
-	db.AutoMigrate(&post{})
+	db := connectDB("api")
+	db.AutoMigrate(post{})
 	return db
 }
 
-func connectDB() *gorm.DB {
-	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+func connectDB(dbName string) *gorm.DB {
+	db, err := gorm.Open(sqlite.Open(fmt.Sprintf("%s.db", dbName)), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}
