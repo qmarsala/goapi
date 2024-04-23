@@ -1,4 +1,4 @@
-POST http://localhost:8080/posts/
+POST http://localhost:8080/api/posts/
 Content-Type: application/json
 Accept: application/json
 
@@ -8,7 +8,7 @@ Accept: application/json
 
 ###
 
-PUT http://localhost:8080/posts/1
+PUT http://localhost:8080/api/posts/1
 Content-Type: application/json
 Accept: application/json
 
@@ -18,12 +18,12 @@ Accept: application/json
 
 ###
 
-GET http://localhost:8080/posts/
+GET http://localhost:8080/api/posts/
 Content-Type: application/json
 Accept: application/json
 
 ###
 
-DELETE http://localhost:8080/posts/3
+DELETE http://localhost:8080/api/posts/3
 Content-Type: application/json
 Accept: application/json
