@@ -39,7 +39,11 @@ func cleanupSeedDB(posts []post) {
 }
 
 func createJsonRequest(method string, path string, requestObj interface{}) (*http.Request, error) {
-	bodyBytes, _ := json.Marshal(requestObj)
+	bodyBytes, err := json.Marshal(requestObj)
+	if err != nil {
+		return nil, err
+	}
+
 	if req, err := http.NewRequest(method, path, bytes.NewBuffer(bodyBytes)); err != nil {
 		return nil, err
 	} else {
@@ -48,16 +52,10 @@ func createJsonRequest(method string, path string, requestObj interface{}) (*htt
 	}
 }
 
-func readPostsResponse(bytes []byte) *PostsResponse {
-	responseBody := &PostsResponse{}
-	json.Unmarshal(bytes, responseBody)
-	return responseBody
-}
-
-func readPost(bytes []byte) *post {
-	responseBody := &post{}
-	json.Unmarshal(bytes, responseBody)
-	return responseBody
+func readResponseBody[T post | PostsResponse](bytes []byte) *T {
+	var responseBody T
+	json.Unmarshal(bytes, &responseBody)
+	return &responseBody
 }
 
 func TestMain(t *testing.M) {
@@ -89,7 +87,7 @@ func TestGetPosts(t *testing.T) {
 	})
 
 	t.Run("Returns list of posts", func(t *testing.T) {
-		postsResponse := readPostsResponse(recorder.Body.Bytes())
+		postsResponse := readResponseBody[PostsResponse](recorder.Body.Bytes())
 		if len(postsResponse.Posts) < 1 {
 			t.Error("Expected at least 1 post, got 0 ", postsResponse.Posts)
 		}
@@ -112,7 +110,7 @@ func TestGetPost(t *testing.T) {
 	})
 
 	t.Run("Returns post", func(t *testing.T) {
-		post := readPost(recorder.Body.Bytes())
+		post := readResponseBody[post](recorder.Body.Bytes())
 		if len(post.Message) < 1 {
 			t.Error("Expected post with a message, message is empty ", post.Message)
 		}
@@ -133,7 +131,7 @@ func TestCreatePost(t *testing.T) {
 	recorder := httptest.NewRecorder()
 
 	router.ServeHTTP(recorder, req)
-	post := readPost(recorder.Body.Bytes())
+	post := readResponseBody[post](recorder.Body.Bytes())
 	defer testDb.Model(post).Delete(post)
 
 	t.Run("Returns 201 status code", func(t *testing.T) {
@@ -207,7 +205,7 @@ func TestUpdatePost(t *testing.T) {
 		}
 	})
 	t.Run("updated post is returned", func(t *testing.T) {
-		responsePost := readPost(recorder.Body.Bytes())
+		responsePost := readResponseBody[post](recorder.Body.Bytes())
 		if responsePost.Message != updateMessage {
 			t.Error("expected message to be updated in database, got ", responsePost.Message)
 		}
