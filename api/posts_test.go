@@ -153,27 +153,29 @@ func TestDeletePost(t *testing.T) {
 	rPath := "/posts/:id"
 	router := gin.Default()
 	router.DELETE(rPath, makeHandler(testDb, deletePost))
+	router.GET(rPath, makeHandler(testDb, getPost))
 	testId := uint(1000)
 	testPost := post{
 		ID:      testId,
 		Message: "To Be Deleted",
 	}
 	testDb.Model(testPost).Create(&testPost)
+	delReq, _ := http.NewRequest("DELETE", fmt.Sprintf("/posts/%d", testId), nil)
+	delRecorder := httptest.NewRecorder()
 
-	req, _ := http.NewRequest("DELETE", fmt.Sprintf("/posts/%d", testId), nil)
-	recorder := httptest.NewRecorder()
-	router.ServeHTTP(recorder, req)
+	router.ServeHTTP(delRecorder, delReq)
 
 	t.Run("Returns 204 status code", func(t *testing.T) {
-		if recorder.Code != 204 {
-			t.Error("Expected 204, got ", recorder.Code)
+		if delRecorder.Code != 204 {
+			t.Error("Expected 204, got ", delRecorder.Code)
 		}
 	})
 	t.Run("Post is deleted", func(t *testing.T) {
-		tx := testDb.Model(testPost).Find(&testPost)
-		if tx.RowsAffected > 0 {
-			t.Error("expected not to find post, but found post in db ")
-			testDb.Model(testPost).Delete(testPost)
+		getReq, _ := http.NewRequest("GET", fmt.Sprintf("/posts/%d", testId), nil)
+		getRecorder := httptest.NewRecorder()
+		router.ServeHTTP(getRecorder, getReq)
+		if getRecorder.Code != 404 {
+			t.Error("Expected 404, got ", getRecorder.Code)
 		}
 	})
 }
@@ -182,6 +184,7 @@ func TestUpdatePost(t *testing.T) {
 	rPath := "/posts/:id"
 	router := gin.Default()
 	router.PUT(rPath, makeHandler(testDb, updatePost))
+	router.GET(rPath, makeHandler(testDb, getPost))
 	testId := uint(2000)
 	testPost := post{
 		ID:      testId,
@@ -195,26 +198,31 @@ func TestUpdatePost(t *testing.T) {
 		ID:      testId,
 		Message: updateMessage,
 	}
-	req, _ := createJsonRequest("PUT", fmt.Sprintf("/posts/%d", testId), updatedPost)
-	recorder := httptest.NewRecorder()
-	router.ServeHTTP(recorder, req)
+	updateReq, _ := createJsonRequest("PUT", fmt.Sprintf("/posts/%d", testId), updatedPost)
+	updateRecorder := httptest.NewRecorder()
+	router.ServeHTTP(updateRecorder, updateReq)
 
 	t.Run("Returns 200 status code", func(t *testing.T) {
-		if recorder.Code != 200 {
-			t.Error("Expected 200, got ", recorder.Code)
+		if updateRecorder.Code != 200 {
+			t.Error("Expected 200, got ", updateRecorder.Code)
 		}
 	})
 	t.Run("updated post is returned", func(t *testing.T) {
-		responsePost := readResponseBody[post](recorder.Body.Bytes())
+		responsePost := readResponseBody[post](updateRecorder.Body.Bytes())
 		if responsePost.Message != updateMessage {
 			t.Error("expected message to be updated in database, got ", responsePost.Message)
 		}
 	})
 	t.Run("Post is updated", func(t *testing.T) {
-		toBeUpdated := post{ID: testId}
-		testDb.Model(post{}).Find(&toBeUpdated)
-		if toBeUpdated.Message != updateMessage {
-			t.Error("expected message to be updated in database, got ", toBeUpdated.Message)
+		getReq, _ := http.NewRequest("GET", fmt.Sprintf("/posts/%d", testId), nil)
+		getRecorder := httptest.NewRecorder()
+		router.ServeHTTP(getRecorder, getReq)
+		response := readResponseBody[post](getRecorder.Body.Bytes())
+		if response.Message != updateMessage {
+			t.Error("expected message to be updated in database, got ", response.Message)
+		}
+		if response.ID != testId {
+			t.Error("expected post to have correct ID, got ", response.ID)
 		}
 	})
 }
