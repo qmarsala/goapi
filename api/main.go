@@ -10,7 +10,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// todo: add error handling back
 func main() {
 	db := initializeDB()
 	api := gin.Default()
