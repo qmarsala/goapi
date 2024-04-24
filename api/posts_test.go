@@ -1,7 +1,5 @@
 package main
 
-// functions to create reqs with content type set correctly
-
 import (
 	"bytes"
 	"encoding/json"
