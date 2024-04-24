@@ -29,7 +29,7 @@ type Post struct {
 
 func getPostById(db *gorm.DB, id uint) (*Post, error) {
 	p := &Post{}
-	if tx := db.Limit(1).Find(&p, "ID = ?", uint(id)); tx.Error != nil {
+	if tx := db.Limit(1).Find(&p, id); tx.Error != nil {
 		return nil, tx.Error
 	} else if tx.RowsAffected < 1 {
 		return nil, nil
