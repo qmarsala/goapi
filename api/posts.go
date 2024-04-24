@@ -1,8 +1,6 @@
 package main
 
 import (
-	"strconv"
-
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -16,13 +14,8 @@ type post struct {
 	Message string `json:"message"`
 }
 
-func parsePostId(c *gin.Context) (uint, error) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err != nil {
-		c.Error(err)
-		return 0, err
-	}
-	return uint(id), nil
+type getPostRequest struct {
+	ID uint `uri:"id" binding:"required"`
 }
 
 func getPostById(db *gorm.DB, id uint) (*post, error) {
@@ -45,14 +38,13 @@ func getPosts(db *gorm.DB, c *gin.Context) {
 }
 
 func getPost(db *gorm.DB, c *gin.Context) {
-	id, err := parsePostId(c)
-	if err != nil {
-		//todo: how to return better response
-		c.Status(400)
+	var getPostRequest getPostRequest
+	if err := c.ShouldBindUri(&getPostRequest); err != nil {
+		c.JSON(400, gin.H{"msg": err})
 		return
 	}
 
-	p, err := getPostById(db, uint(id))
+	p, err := getPostById(db, getPostRequest.ID)
 	switch {
 	case err != nil:
 		c.Status(500)
@@ -75,15 +67,15 @@ func createPost(db *gorm.DB, c *gin.Context) {
 }
 
 func updatePost(db *gorm.DB, c *gin.Context) {
-	id, err := parsePostId(c)
-	if err != nil {
-		c.Status(400)
+	var getPostRequest getPostRequest
+	if err := c.ShouldBindUri(&getPostRequest); err != nil {
+		c.JSON(400, gin.H{"msg": err})
 		return
 	}
 	//todo: validate request
 	update := &post{}
 	c.Bind(update)
-	p, err := getPostById(db, uint(id))
+	p, err := getPostById(db, getPostRequest.ID)
 	switch {
 	case p != nil:
 		if tx := db.Model(p).UpdateColumns(update); tx.Error == nil {
@@ -99,13 +91,13 @@ func updatePost(db *gorm.DB, c *gin.Context) {
 }
 
 func deletePost(db *gorm.DB, c *gin.Context) {
-	id, err := parsePostId(c)
-	if err != nil {
-		c.Status(404)
+	var getPostRequest getPostRequest
+	if err := c.ShouldBindUri(&getPostRequest); err != nil {
+		c.JSON(400, gin.H{"msg": err})
 		return
 	}
 
-	p, _ := getPostById(db, id)
+	p, _ := getPostById(db, getPostRequest.ID)
 	switch {
 	case p != nil:
 		db.Model(p).Delete(p)
