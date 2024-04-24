@@ -28,13 +28,13 @@ type Post struct {
 }
 
 func getPostById(db *gorm.DB, id uint) (*Post, error) {
-	p := &Post{}
+	p := Post{}
 	if tx := db.Limit(1).Find(&p, id); tx.Error != nil {
 		return nil, tx.Error
 	} else if tx.RowsAffected < 1 {
 		return nil, nil
 	}
-	return p, nil
+	return &p, nil
 }
 
 func getPosts(db *gorm.DB, c *gin.Context) {
