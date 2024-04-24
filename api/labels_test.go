@@ -17,15 +17,15 @@ var testDb *gorm.DB
 var api *gin.Engine
 
 func seedDB(posts []Label) []Label {
-	createdPosts := []Label{}
-	for _, p := range posts {
-		tx := testDb.Model(Label{}).Create(&p)
-		createdPosts = append(createdPosts, p)
+	createdLabels := []Label{}
+	for _, l := range posts {
+		tx := testDb.Model(Label{}).Create(&l)
+		createdLabels = append(createdLabels, l)
 		if tx.Error != nil {
 			fmt.Println(tx.Error)
 		}
 	}
-	return createdPosts
+	return createdLabels
 }
 
 func cleanupSeedDB(posts []Label) {
@@ -61,9 +61,9 @@ func TestMain(t *testing.M) {
 	testDb = initializeDB[Label]("test")
 	api = setupRoutes(testDb)
 	posts := []Label{
-		{ID: 1, Text: "Hello!"},
-		{ID: 2, Text: "Hello, Go!"},
-		{ID: 3, Text: "Hello, World!"},
+		{ID: 1, Text: "Hello!", Target: "dog"},
+		{ID: 2, Text: "Hello, Go!", Target: "cat"},
+		{ID: 3, Text: "Hello, World!", Target: "bird"},
 	}
 	insertedPosts := seedDB(posts)
 	code := t.Run()
@@ -105,6 +105,9 @@ func TestGetLabel(t *testing.T) {
 		label := readResponseBody[Label](recorder.Body.Bytes())
 		if len(label.Text) < 1 {
 			t.Error("Expected label with a text, text is empty ", label.Text)
+		}
+		if len(label.Target) < 1 {
+			t.Error("Expected label with a target, target is empty ", label.Target)
 		}
 		if label.ID < 1 {
 			t.Error("Expected label with an ID, ID is 0 ", label.Text)
