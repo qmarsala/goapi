@@ -115,16 +115,17 @@ func TestGetLabel(t *testing.T) {
 	})
 }
 
-func TestCreatePost(t *testing.T) {
-	rPost := Label{
-		Text: "Testing Create Post",
+func TestCreateLabel(t *testing.T) {
+	createLabelRequest := CreateLabelRequest{
+		Text:   "Testing Create Label",
+		Target: "building",
 	}
-	req, _ := createJsonRequest("POST", "/api/posts", rPost)
+	req, _ := createJsonRequest("POST", "/api/labels", createLabelRequest)
 	recorder := httptest.NewRecorder()
 
 	api.ServeHTTP(recorder, req)
-	post := readResponseBody[Label](recorder.Body.Bytes())
-	defer testDb.Model(post).Delete(post)
+	label := readResponseBody[Label](recorder.Body.Bytes())
+	defer testDb.Model(label).Delete(label)
 
 	t.Run("Returns 201 status code", func(t *testing.T) {
 		if recorder.Code != 201 {
@@ -132,11 +133,14 @@ func TestCreatePost(t *testing.T) {
 		}
 	})
 	t.Run("Returns post", func(t *testing.T) {
-		if post.Text != rPost.Text {
-			t.Error("Expected message to match request, got ", post.Text)
+		if label.Text != createLabelRequest.Text {
+			t.Error("Expected text to match request, got ", label.Text)
 		}
-		if post.ID < 1 {
-			t.Error("Expected post with an ID, ID is 0 ", post.ID)
+		if label.Target != createLabelRequest.Target {
+			t.Error("Expected target to match request, got ", label.Target)
+		}
+		if label.ID < 1 {
+			t.Error("Expected post with an ID, ID is 0 ", label.ID)
 		}
 	})
 }

@@ -67,18 +67,19 @@ func getLabel(db *gorm.DB, c *gin.Context) {
 	}
 }
 
-func createPost(db *gorm.DB, c *gin.Context) {
+func createLabel(db *gorm.DB, c *gin.Context) {
 	var createPostRequest CreateLabelRequest
 	if err := c.ShouldBind(&createPostRequest); err != nil {
 		c.JSON(400, gin.H{"msg": err})
 		return
 	}
 
-	newPost := Label{
-		Text: createPostRequest.Text,
+	newLabel := Label{
+		Text:   createPostRequest.Text,
+		Target: createPostRequest.Target,
 	}
-	if tx := db.Model(Label{}).Create(&newPost); tx.Error == nil {
-		c.JSON(201, newPost)
+	if tx := db.Model(Label{}).Create(&newLabel); tx.Error == nil {
+		c.JSON(201, newLabel)
 	} else {
 		c.Status(500)
 	}
