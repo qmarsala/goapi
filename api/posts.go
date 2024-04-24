@@ -18,6 +18,10 @@ type UpdatePostRequest struct {
 	Message string `json:"message"`
 }
 
+type CreatePostRequest struct {
+	Message string `json:"message"`
+}
+
 type Post struct {
 	ID      uint   `json:"id" gorm:"primarykey"`
 	Message string `json:"message"`
@@ -61,10 +65,16 @@ func getPost(db *gorm.DB, c *gin.Context) {
 }
 
 func createPost(db *gorm.DB, c *gin.Context) {
-	//todo: validate request
-	newPost := Post{}
-	c.Bind(&newPost)
-	if tx := db.Model(&Post{}).Create(&newPost); tx.Error == nil {
+	var createPostRequest CreatePostRequest
+	if err := c.ShouldBind(&createPostRequest); err != nil {
+		c.JSON(400, gin.H{"msg": err})
+		return
+	}
+
+	newPost := Post{
+		Message: createPostRequest.Message,
+	}
+	if tx := db.Model(Post{}).Create(&newPost); tx.Error == nil {
 		c.JSON(201, newPost)
 	} else {
 		c.Status(500)
