@@ -18,16 +18,6 @@ func main() {
 	log.Fatal(api.Run())
 }
 
-func setupRoutes(db *gorm.DB) *gin.Engine {
-	api := gin.Default()
-	api.GET("/api/posts", makeHandler(db, getPosts))
-	api.POST("/api/posts", makeHandler(db, createPost))
-	api.GET("/api/posts/:id", makeHandler(db, getPost))
-	api.PUT("/api/posts/:id", makeHandler(db, updatePost))
-	api.DELETE("/api/posts/:id", makeHandler(db, deletePost))
-	return api
-}
-
 func initializeDB() *gorm.DB {
 	db := connectDB("api")
 	db.AutoMigrate(Post{})
@@ -40,4 +30,20 @@ func connectDB(dbName string) *gorm.DB {
 		panic("failed to connect database")
 	}
 	return db
+}
+
+func setupRoutes(db *gorm.DB) *gin.Engine {
+	api := gin.Default()
+	api.GET("/api/posts", makeHandler(db, getPosts))
+	api.POST("/api/posts", makeHandler(db, createPost))
+	api.GET("/api/posts/:id", makeHandler(db, getPost))
+	api.PUT("/api/posts/:id", makeHandler(db, updatePost))
+	api.DELETE("/api/posts/:id", makeHandler(db, deletePost))
+	return api
+}
+
+func makeHandler(db *gorm.DB, fn func(*gorm.DB, *gin.Context)) func(*gin.Context) {
+	return func(c *gin.Context) {
+		fn(db, c)
+	}
 }

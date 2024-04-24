@@ -118,9 +118,3 @@ func deletePost(db *gorm.DB, c *gin.Context) {
 		c.Status(404)
 	}
 }
-
-func makeHandler(db *gorm.DB, fn func(*gorm.DB, *gin.Context)) func(*gin.Context) {
-	return func(c *gin.Context) {
-		fn(db, c)
-	}
-}
