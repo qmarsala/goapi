@@ -6,20 +6,25 @@ import (
 )
 
 type PostsResponse struct {
-	Posts []post `json:"posts"`
+	Posts []Post `json:"posts"`
 }
 
-type post struct {
+type GetPostRequest struct {
+	ID uint `uri:"id" binding:"required"`
+}
+
+type UpdatePostRequest struct {
+	ID      uint   `uri:"id" binding:"required"`
+	Message string `json:"message"`
+}
+
+type Post struct {
 	ID      uint   `json:"id" gorm:"primarykey"`
 	Message string `json:"message"`
 }
 
-type getPostRequest struct {
-	ID uint `uri:"id" binding:"required"`
-}
-
-func getPostById(db *gorm.DB, id uint) (*post, error) {
-	p := &post{}
+func getPostById(db *gorm.DB, id uint) (*Post, error) {
+	p := &Post{}
 	if tx := db.Find(&p, "ID = ?", uint(id)); tx.Error != nil {
 		return nil, tx.Error
 	} else if tx.RowsAffected < 1 {
@@ -29,7 +34,7 @@ func getPostById(db *gorm.DB, id uint) (*post, error) {
 }
 
 func getPosts(db *gorm.DB, c *gin.Context) {
-	posts := []post{}
+	posts := []Post{}
 	if tx := db.Limit(25).Find(&posts); tx.Error != nil {
 		c.Status(500)
 	} else {
@@ -38,7 +43,7 @@ func getPosts(db *gorm.DB, c *gin.Context) {
 }
 
 func getPost(db *gorm.DB, c *gin.Context) {
-	var getPostRequest getPostRequest
+	var getPostRequest GetPostRequest
 	if err := c.ShouldBindUri(&getPostRequest); err != nil {
 		c.JSON(400, gin.H{"msg": err})
 		return
@@ -57,9 +62,9 @@ func getPost(db *gorm.DB, c *gin.Context) {
 
 func createPost(db *gorm.DB, c *gin.Context) {
 	//todo: validate request
-	newPost := post{}
+	newPost := Post{}
 	c.Bind(&newPost)
-	if tx := db.Model(&post{}).Create(&newPost); tx.Error == nil {
+	if tx := db.Model(&Post{}).Create(&newPost); tx.Error == nil {
 		c.JSON(201, newPost)
 	} else {
 		c.Status(500)
@@ -67,15 +72,12 @@ func createPost(db *gorm.DB, c *gin.Context) {
 }
 
 func updatePost(db *gorm.DB, c *gin.Context) {
-	var getPostRequest getPostRequest
-	if err := c.ShouldBindUri(&getPostRequest); err != nil {
+	var update UpdatePostRequest
+	if err := c.ShouldBind(&update); err != nil {
 		c.JSON(400, gin.H{"msg": err})
 		return
 	}
-	//todo: validate request
-	update := &post{}
-	c.Bind(update)
-	p, err := getPostById(db, getPostRequest.ID)
+	p, err := getPostById(db, update.ID)
 	switch {
 	case p != nil:
 		if tx := db.Model(p).UpdateColumns(update); tx.Error == nil {
@@ -91,7 +93,7 @@ func updatePost(db *gorm.DB, c *gin.Context) {
 }
 
 func deletePost(db *gorm.DB, c *gin.Context) {
-	var getPostRequest getPostRequest
+	var getPostRequest GetPostRequest
 	if err := c.ShouldBindUri(&getPostRequest); err != nil {
 		c.JSON(400, gin.H{"msg": err})
 		return

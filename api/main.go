@@ -24,7 +24,7 @@ func main() {
 
 func initializeDB() *gorm.DB {
 	db := connectDB("api")
-	db.AutoMigrate(post{})
+	db.AutoMigrate(Post{})
 	return db
 }
 

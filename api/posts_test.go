@@ -17,10 +17,10 @@ import (
 
 var testDb *gorm.DB
 
-func seedDB(posts []post) []post {
-	createdPosts := []post{}
+func seedDB(posts []Post) []Post {
+	createdPosts := []Post{}
 	for _, p := range posts {
-		tx := testDb.Model(post{}).Create(&p)
+		tx := testDb.Model(Post{}).Create(&p)
 		createdPosts = append(createdPosts, p)
 		if tx.Error != nil {
 			fmt.Println(tx.Error)
@@ -29,7 +29,7 @@ func seedDB(posts []post) []post {
 	return createdPosts
 }
 
-func cleanupSeedDB(posts []post) {
+func cleanupSeedDB(posts []Post) {
 	for _, p := range posts {
 		tx := testDb.Model(p).Delete(p)
 		if tx.Error != nil {
@@ -52,7 +52,7 @@ func createJsonRequest(method string, path string, requestObj interface{}) (*htt
 	}
 }
 
-func readResponseBody[T post | PostsResponse](bytes []byte) *T {
+func readResponseBody[T Post | PostsResponse](bytes []byte) *T {
 	var responseBody T
 	json.Unmarshal(bytes, &responseBody)
 	return &responseBody
@@ -60,7 +60,7 @@ func readResponseBody[T post | PostsResponse](bytes []byte) *T {
 
 func TestMain(t *testing.M) {
 	testDb = connectDB("test")
-	posts := []post{
+	posts := []Post{
 		{ID: 1, Message: "Hello!"},
 		{ID: 2, Message: "Hello, Go!"},
 		{ID: 3, Message: "Hello, World!"},
@@ -110,7 +110,7 @@ func TestGetPost(t *testing.T) {
 	})
 
 	t.Run("Returns post", func(t *testing.T) {
-		post := readResponseBody[post](recorder.Body.Bytes())
+		post := readResponseBody[Post](recorder.Body.Bytes())
 		if len(post.Message) < 1 {
 			t.Error("Expected post with a message, message is empty ", post.Message)
 		}
@@ -124,14 +124,14 @@ func TestCreatePost(t *testing.T) {
 	rPath := "/posts"
 	router := gin.Default()
 	router.POST(rPath, makeHandler(testDb, createPost))
-	rPost := post{
+	rPost := Post{
 		Message: "Testing Create Post",
 	}
 	req, _ := createJsonRequest("POST", rPath, rPost)
 	recorder := httptest.NewRecorder()
 
 	router.ServeHTTP(recorder, req)
-	post := readResponseBody[post](recorder.Body.Bytes())
+	post := readResponseBody[Post](recorder.Body.Bytes())
 	defer testDb.Model(post).Delete(post)
 
 	t.Run("Returns 201 status code", func(t *testing.T) {
@@ -155,7 +155,7 @@ func TestDeletePost(t *testing.T) {
 	router.DELETE(rPath, makeHandler(testDb, deletePost))
 	router.GET(rPath, makeHandler(testDb, getPost))
 	testId := uint(1000)
-	testPost := post{
+	testPost := Post{
 		ID:      testId,
 		Message: "To Be Deleted",
 	}
@@ -186,7 +186,7 @@ func TestUpdatePost(t *testing.T) {
 	router.PUT(rPath, makeHandler(testDb, updatePost))
 	router.GET(rPath, makeHandler(testDb, getPost))
 	testId := uint(2000)
-	testPost := post{
+	testPost := Post{
 		ID:      testId,
 		Message: "To Be Updated",
 	}
@@ -194,7 +194,7 @@ func TestUpdatePost(t *testing.T) {
 	defer testDb.Model(testPost).Delete(testPost)
 
 	updateMessage := "I am updated!"
-	updatedPost := post{
+	updatedPost := Post{
 		ID:      testId,
 		Message: updateMessage,
 	}
@@ -208,7 +208,7 @@ func TestUpdatePost(t *testing.T) {
 		}
 	})
 	t.Run("updated post is returned", func(t *testing.T) {
-		responsePost := readResponseBody[post](updateRecorder.Body.Bytes())
+		responsePost := readResponseBody[Post](updateRecorder.Body.Bytes())
 		if responsePost.Message != updateMessage {
 			t.Error("expected message to be updated in database, got ", responsePost.Message)
 		}
@@ -217,7 +217,7 @@ func TestUpdatePost(t *testing.T) {
 		getReq, _ := http.NewRequest("GET", fmt.Sprintf("/posts/%d", testId), nil)
 		getRecorder := httptest.NewRecorder()
 		router.ServeHTTP(getRecorder, getReq)
-		response := readResponseBody[post](getRecorder.Body.Bytes())
+		response := readResponseBody[Post](getRecorder.Body.Bytes())
 		if response.Message != updateMessage {
 			t.Error("expected message to be updated in database, got ", response.Message)
 		}
