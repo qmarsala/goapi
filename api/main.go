@@ -14,6 +14,7 @@ func main() {
 	db := initializeDB()
 	api := gin.Default()
 	api.Use(cors.Default())
+	api.Use(gin.Recovery())
 	api.GET("/api/posts", makeHandler(db, getPosts))
 	api.POST("/api/posts", makeHandler(db, createPost))
 	api.GET("/api/posts/:id", makeHandler(db, getPost))
