@@ -11,10 +11,12 @@ import (
 	"os"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 var testDb *gorm.DB
+var api *gin.Engine
 
 func seedDB(posts []Post) []Post {
 	createdPosts := []Post{}
@@ -59,6 +61,7 @@ func readResponseBody[T Post | PostsResponse](bytes []byte) *T {
 
 func TestMain(t *testing.M) {
 	testDb = connectDB("test")
+	api = setupRoutes(testDb)
 	posts := []Post{
 		{ID: 1, Message: "Hello!"},
 		{ID: 2, Message: "Hello, Go!"},
@@ -71,7 +74,6 @@ func TestMain(t *testing.M) {
 }
 
 func TestGetPosts(t *testing.T) {
-	api := setupRoutes(testDb)
 	req, _ := http.NewRequest("GET", "/api/posts", nil)
 	recorder := httptest.NewRecorder()
 	api.ServeHTTP(recorder, req)
@@ -91,7 +93,6 @@ func TestGetPosts(t *testing.T) {
 }
 
 func TestGetPost(t *testing.T) {
-	api := setupRoutes(testDb)
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/api/posts/%d", 1), nil)
 	recorder := httptest.NewRecorder()
 	api.ServeHTTP(recorder, req)
@@ -114,7 +115,6 @@ func TestGetPost(t *testing.T) {
 }
 
 func TestCreatePost(t *testing.T) {
-	api := setupRoutes(testDb)
 	rPost := Post{
 		Message: "Testing Create Post",
 	}
@@ -141,7 +141,6 @@ func TestCreatePost(t *testing.T) {
 }
 
 func TestDeletePost(t *testing.T) {
-	api := setupRoutes(testDb)
 	testId := uint(1000)
 	testPost := Post{
 		ID:      testId,
@@ -169,7 +168,6 @@ func TestDeletePost(t *testing.T) {
 }
 
 func TestUpdatePost(t *testing.T) {
-	api := setupRoutes(testDb)
 	testId := uint(2000)
 	testPost := Post{
 		ID:      testId,
