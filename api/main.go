@@ -42,7 +42,7 @@ func setupRoutes(db *gorm.DB) *gin.Engine {
 	return api
 }
 
-func makeHandler(db *gorm.DB, fn func(*gorm.DB, *gin.Context)) func(*gin.Context) {
+func makeHandler(db *gorm.DB, fn func(*gorm.DB, *gin.Context)) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		fn(db, c)
 	}
