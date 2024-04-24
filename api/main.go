@@ -11,16 +11,16 @@ import (
 )
 
 func main() {
-	db := initializeDB()
+	db := initializeDB[Post]("api")
 	api := setupRoutes(db)
 	api.Use(cors.Default())
 	api.Use(gin.Recovery())
 	log.Fatal(api.Run())
 }
 
-func initializeDB() *gorm.DB {
-	db := connectDB("api")
-	db.AutoMigrate(Post{})
+func initializeDB[t interface{}](dbName string) *gorm.DB {
+	db := connectDB(dbName)
+	db.AutoMigrate(new(t))
 	return db
 }
 

@@ -58,7 +58,7 @@ func readResponseBody[T Post | PostsResponse](bytes []byte) *T {
 }
 
 func TestMain(t *testing.M) {
-	testDb = connectDB("test")
+	testDb = initializeDB[Post]("test")
 	api = setupRoutes(testDb)
 	posts := []Post{
 		{ID: 1, Message: "Hello!"},
