@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	db := initializeDB[Post]("api")
+	db := initializeDB[Label]("api")
 	api := setupRoutes(db)
 	api.Use(cors.Default())
 	api.Use(gin.Recovery())

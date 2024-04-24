@@ -5,30 +5,30 @@ import (
 	"gorm.io/gorm"
 )
 
-type PostsResponse struct {
-	Posts []Post `json:"posts"`
+type LabelsResponse struct {
+	Labels []Label `json:"labels"`
 }
 
-type GetPostRequest struct {
+type GetLabelRequest struct {
 	ID uint `uri:"id" binding:"required"`
 }
 
-type UpdatePostRequest struct {
-	ID      uint   `uri:"id" binding:"required"`
-	Message string `json:"message"`
+type UpdateLabelRequest struct {
+	ID   uint   `uri:"id" binding:"required"`
+	Text string `json:"text"`
 }
 
-type CreatePostRequest struct {
-	Message string `json:"message"`
+type CreateLabelRequest struct {
+	Text string `json:"text"`
 }
 
-type Post struct {
-	ID      uint   `json:"id" gorm:"primarykey"`
-	Message string `json:"message"`
+type Label struct {
+	ID   uint   `json:"id" gorm:"primarykey"`
+	Text string `json:"text"`
 }
 
-func getPostById(db *gorm.DB, id uint) (*Post, error) {
-	p := Post{}
+func getPostById(db *gorm.DB, id uint) (*Label, error) {
+	p := Label{}
 	if tx := db.Limit(1).Find(&p, id); tx.Error != nil {
 		return nil, tx.Error
 	} else if tx.RowsAffected < 1 {
@@ -38,16 +38,16 @@ func getPostById(db *gorm.DB, id uint) (*Post, error) {
 }
 
 func getPosts(db *gorm.DB, c *gin.Context) {
-	posts := []Post{}
+	posts := []Label{}
 	if tx := db.Limit(25).Find(&posts); tx.Error != nil {
 		c.Status(500)
 	} else {
-		c.JSON(200, &PostsResponse{Posts: posts})
+		c.JSON(200, &LabelsResponse{Labels: posts})
 	}
 }
 
 func getPost(db *gorm.DB, c *gin.Context) {
-	var getPostRequest GetPostRequest
+	var getPostRequest GetLabelRequest
 	if err := c.ShouldBindUri(&getPostRequest); err != nil {
 		c.JSON(400, gin.H{"msg": err})
 		return
@@ -65,16 +65,16 @@ func getPost(db *gorm.DB, c *gin.Context) {
 }
 
 func createPost(db *gorm.DB, c *gin.Context) {
-	var createPostRequest CreatePostRequest
+	var createPostRequest CreateLabelRequest
 	if err := c.ShouldBind(&createPostRequest); err != nil {
 		c.JSON(400, gin.H{"msg": err})
 		return
 	}
 
-	newPost := Post{
-		Message: createPostRequest.Message,
+	newPost := Label{
+		Text: createPostRequest.Text,
 	}
-	if tx := db.Model(Post{}).Create(&newPost); tx.Error == nil {
+	if tx := db.Model(Label{}).Create(&newPost); tx.Error == nil {
 		c.JSON(201, newPost)
 	} else {
 		c.Status(500)
@@ -82,7 +82,7 @@ func createPost(db *gorm.DB, c *gin.Context) {
 }
 
 func updatePost(db *gorm.DB, c *gin.Context) {
-	var update UpdatePostRequest
+	var update UpdateLabelRequest
 	if err := c.ShouldBind(&update); err != nil {
 		c.JSON(400, gin.H{"msg": err})
 		return
@@ -103,7 +103,7 @@ func updatePost(db *gorm.DB, c *gin.Context) {
 }
 
 func deletePost(db *gorm.DB, c *gin.Context) {
-	var getPostRequest GetPostRequest
+	var getPostRequest GetLabelRequest
 	if err := c.ShouldBindUri(&getPostRequest); err != nil {
 		c.JSON(400, gin.H{"msg": err})
 		return

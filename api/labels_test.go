@@ -16,10 +16,10 @@ import (
 var testDb *gorm.DB
 var api *gin.Engine
 
-func seedDB(posts []Post) []Post {
-	createdPosts := []Post{}
+func seedDB(posts []Label) []Label {
+	createdPosts := []Label{}
 	for _, p := range posts {
-		tx := testDb.Model(Post{}).Create(&p)
+		tx := testDb.Model(Label{}).Create(&p)
 		createdPosts = append(createdPosts, p)
 		if tx.Error != nil {
 			fmt.Println(tx.Error)
@@ -28,7 +28,7 @@ func seedDB(posts []Post) []Post {
 	return createdPosts
 }
 
-func cleanupSeedDB(posts []Post) {
+func cleanupSeedDB(posts []Label) {
 	for _, p := range posts {
 		tx := testDb.Model(p).Delete(p)
 		if tx.Error != nil {
@@ -51,19 +51,19 @@ func createJsonRequest(method string, path string, requestObj interface{}) (*htt
 	}
 }
 
-func readResponseBody[T Post | PostsResponse](bytes []byte) *T {
+func readResponseBody[T Label | LabelsResponse](bytes []byte) *T {
 	var responseBody T
 	json.Unmarshal(bytes, &responseBody)
 	return &responseBody
 }
 
 func TestMain(t *testing.M) {
-	testDb = initializeDB[Post]("test")
+	testDb = initializeDB[Label]("test")
 	api = setupRoutes(testDb)
-	posts := []Post{
-		{ID: 1, Message: "Hello!"},
-		{ID: 2, Message: "Hello, Go!"},
-		{ID: 3, Message: "Hello, World!"},
+	posts := []Label{
+		{ID: 1, Text: "Hello!"},
+		{ID: 2, Text: "Hello, Go!"},
+		{ID: 3, Text: "Hello, World!"},
 	}
 	insertedPosts := seedDB(posts)
 	code := t.Run()
@@ -83,9 +83,9 @@ func TestGetPosts(t *testing.T) {
 	})
 
 	t.Run("Returns list of posts", func(t *testing.T) {
-		postsResponse := readResponseBody[PostsResponse](recorder.Body.Bytes())
-		if len(postsResponse.Posts) < 1 {
-			t.Error("Expected at least 1 post, got 0 ", postsResponse.Posts)
+		postsResponse := readResponseBody[LabelsResponse](recorder.Body.Bytes())
+		if len(postsResponse.Labels) < 1 {
+			t.Error("Expected at least 1 post, got 0 ", postsResponse.Labels)
 		}
 	})
 }
@@ -102,25 +102,25 @@ func TestGetPost(t *testing.T) {
 	})
 
 	t.Run("Returns post", func(t *testing.T) {
-		post := readResponseBody[Post](recorder.Body.Bytes())
-		if len(post.Message) < 1 {
-			t.Error("Expected post with a message, message is empty ", post.Message)
+		post := readResponseBody[Label](recorder.Body.Bytes())
+		if len(post.Text) < 1 {
+			t.Error("Expected post with a message, message is empty ", post.Text)
 		}
 		if post.ID < 1 {
-			t.Error("Expected post with an ID, ID is 0 ", post.Message)
+			t.Error("Expected post with an ID, ID is 0 ", post.Text)
 		}
 	})
 }
 
 func TestCreatePost(t *testing.T) {
-	rPost := Post{
-		Message: "Testing Create Post",
+	rPost := Label{
+		Text: "Testing Create Post",
 	}
 	req, _ := createJsonRequest("POST", "/api/posts", rPost)
 	recorder := httptest.NewRecorder()
 
 	api.ServeHTTP(recorder, req)
-	post := readResponseBody[Post](recorder.Body.Bytes())
+	post := readResponseBody[Label](recorder.Body.Bytes())
 	defer testDb.Model(post).Delete(post)
 
 	t.Run("Returns 201 status code", func(t *testing.T) {
@@ -129,8 +129,8 @@ func TestCreatePost(t *testing.T) {
 		}
 	})
 	t.Run("Returns post", func(t *testing.T) {
-		if post.Message != rPost.Message {
-			t.Error("Expected message to match request, got ", post.Message)
+		if post.Text != rPost.Text {
+			t.Error("Expected message to match request, got ", post.Text)
 		}
 		if post.ID < 1 {
 			t.Error("Expected post with an ID, ID is 0 ", post.ID)
@@ -140,9 +140,9 @@ func TestCreatePost(t *testing.T) {
 
 func TestDeletePost(t *testing.T) {
 	testId := uint(1000)
-	testPost := Post{
-		ID:      testId,
-		Message: "To Be Deleted",
+	testPost := Label{
+		ID:   testId,
+		Text: "To Be Deleted",
 	}
 	testDb.Model(testPost).Create(&testPost)
 	delReq, _ := http.NewRequest("DELETE", fmt.Sprintf("/api/posts/%d", testId), nil)
@@ -167,17 +167,17 @@ func TestDeletePost(t *testing.T) {
 
 func TestUpdatePost(t *testing.T) {
 	testId := uint(2000)
-	testPost := Post{
-		ID:      testId,
-		Message: "To Be Updated",
+	testPost := Label{
+		ID:   testId,
+		Text: "To Be Updated",
 	}
 	testDb.Model(testPost).Create(&testPost)
 	defer testDb.Model(testPost).Delete(testPost)
 
 	updateMessage := "I am updated!"
-	updatedPost := Post{
-		ID:      testId,
-		Message: updateMessage,
+	updatedPost := Label{
+		ID:   testId,
+		Text: updateMessage,
 	}
 	updateReq, _ := createJsonRequest("PUT", fmt.Sprintf("/api/posts/%d", testId), updatedPost)
 	updateRecorder := httptest.NewRecorder()
@@ -189,18 +189,18 @@ func TestUpdatePost(t *testing.T) {
 		}
 	})
 	t.Run("updated post is returned", func(t *testing.T) {
-		responsePost := readResponseBody[Post](updateRecorder.Body.Bytes())
-		if responsePost.Message != updateMessage {
-			t.Error("expected message to be updated in database, got ", responsePost.Message)
+		responsePost := readResponseBody[Label](updateRecorder.Body.Bytes())
+		if responsePost.Text != updateMessage {
+			t.Error("expected message to be updated in database, got ", responsePost.Text)
 		}
 	})
 	t.Run("Post is updated", func(t *testing.T) {
 		getReq, _ := http.NewRequest("GET", fmt.Sprintf("/api/posts/%d", testId), nil)
 		getRecorder := httptest.NewRecorder()
 		api.ServeHTTP(getRecorder, getReq)
-		response := readResponseBody[Post](getRecorder.Body.Bytes())
-		if response.Message != updateMessage {
-			t.Error("expected message to be updated in database, got ", response.Message)
+		response := readResponseBody[Label](getRecorder.Body.Bytes())
+		if response.Text != updateMessage {
+			t.Error("expected message to be updated in database, got ", response.Text)
 		}
 		if response.ID != testId {
 			t.Error("expected post to have correct ID, got ", response.ID)
