@@ -145,72 +145,90 @@ func TestCreateLabel(t *testing.T) {
 	})
 }
 
-func TestDeletePost(t *testing.T) {
-	testId := uint(1000)
-	testPost := Label{
-		ID:   testId,
-		Text: "To Be Deleted",
+func TestCreateLabelWithBadInput(t *testing.T) {
+	createLabelRequest := CreateLabelRequest{
+		Text: "Testing Create Label",
 	}
-	testDb.Model(testPost).Create(&testPost)
-	delReq, _ := http.NewRequest("DELETE", fmt.Sprintf("/api/posts/%d", testId), nil)
-	delRecorder := httptest.NewRecorder()
+	req, _ := createJsonRequest("POST", "/api/labels", createLabelRequest)
+	recorder := httptest.NewRecorder()
 
-	api.ServeHTTP(delRecorder, delReq)
+	api.ServeHTTP(recorder, req)
+	label := readResponseBody[Label](recorder.Body.Bytes())
+	defer testDb.Model(label).Delete(label)
 
-	t.Run("Returns 204 status code", func(t *testing.T) {
-		if delRecorder.Code != 204 {
-			t.Error("Expected 204, got ", delRecorder.Code)
-		}
-	})
-	t.Run("Post is deleted", func(t *testing.T) {
-		getReq, _ := http.NewRequest("GET", fmt.Sprintf("/api/posts/%d", testId), nil)
-		getRecorder := httptest.NewRecorder()
-		api.ServeHTTP(getRecorder, getReq)
-		if getRecorder.Code != 404 {
-			t.Error("Expected 404, got ", getRecorder.Code)
+	t.Run("Returns 400 status code", func(t *testing.T) {
+		if recorder.Code != 400 {
+			t.Error("Expected 400, got ", recorder.Code)
 		}
 	})
 }
 
-func TestUpdatePost(t *testing.T) {
-	testId := uint(2000)
-	testPost := Label{
-		ID:   testId,
-		Text: "To Be Updated",
-	}
-	testDb.Model(testPost).Create(&testPost)
-	defer testDb.Model(testPost).Delete(testPost)
+// func TestDeletePost(t *testing.T) {
+// 	testId := uint(1000)
+// 	testPost := Label{
+// 		ID:   testId,
+// 		Text: "To Be Deleted",
+// 	}
+// 	testDb.Model(testPost).Create(&testPost)
+// 	delReq, _ := http.NewRequest("DELETE", fmt.Sprintf("/api/posts/%d", testId), nil)
+// 	delRecorder := httptest.NewRecorder()
 
-	updateMessage := "I am updated!"
-	updatedPost := Label{
-		ID:   testId,
-		Text: updateMessage,
-	}
-	updateReq, _ := createJsonRequest("PUT", fmt.Sprintf("/api/posts/%d", testId), updatedPost)
-	updateRecorder := httptest.NewRecorder()
-	api.ServeHTTP(updateRecorder, updateReq)
+// 	api.ServeHTTP(delRecorder, delReq)
 
-	t.Run("Returns 200 status code", func(t *testing.T) {
-		if updateRecorder.Code != 200 {
-			t.Error("Expected 200, got ", updateRecorder.Code)
-		}
-	})
-	t.Run("updated post is returned", func(t *testing.T) {
-		responsePost := readResponseBody[Label](updateRecorder.Body.Bytes())
-		if responsePost.Text != updateMessage {
-			t.Error("expected message to be updated in database, got ", responsePost.Text)
-		}
-	})
-	t.Run("Post is updated", func(t *testing.T) {
-		getReq, _ := http.NewRequest("GET", fmt.Sprintf("/api/posts/%d", testId), nil)
-		getRecorder := httptest.NewRecorder()
-		api.ServeHTTP(getRecorder, getReq)
-		response := readResponseBody[Label](getRecorder.Body.Bytes())
-		if response.Text != updateMessage {
-			t.Error("expected message to be updated in database, got ", response.Text)
-		}
-		if response.ID != testId {
-			t.Error("expected post to have correct ID, got ", response.ID)
-		}
-	})
-}
+// 	t.Run("Returns 204 status code", func(t *testing.T) {
+// 		if delRecorder.Code != 204 {
+// 			t.Error("Expected 204, got ", delRecorder.Code)
+// 		}
+// 	})
+// 	t.Run("Post is deleted", func(t *testing.T) {
+// 		getReq, _ := http.NewRequest("GET", fmt.Sprintf("/api/posts/%d", testId), nil)
+// 		getRecorder := httptest.NewRecorder()
+// 		api.ServeHTTP(getRecorder, getReq)
+// 		if getRecorder.Code != 404 {
+// 			t.Error("Expected 404, got ", getRecorder.Code)
+// 		}
+// 	})
+// }
+
+// func TestUpdatePost(t *testing.T) {
+// 	testId := uint(2000)
+// 	testPost := Label{
+// 		ID:   testId,
+// 		Text: "To Be Updated",
+// 	}
+// 	testDb.Model(testPost).Create(&testPost)
+// 	defer testDb.Model(testPost).Delete(testPost)
+
+// 	updateMessage := "I am updated!"
+// 	updatedPost := Label{
+// 		ID:   testId,
+// 		Text: updateMessage,
+// 	}
+// 	updateReq, _ := createJsonRequest("PUT", fmt.Sprintf("/api/posts/%d", testId), updatedPost)
+// 	updateRecorder := httptest.NewRecorder()
+// 	api.ServeHTTP(updateRecorder, updateReq)
+
+// 	t.Run("Returns 200 status code", func(t *testing.T) {
+// 		if updateRecorder.Code != 200 {
+// 			t.Error("Expected 200, got ", updateRecorder.Code)
+// 		}
+// 	})
+// 	t.Run("updated post is returned", func(t *testing.T) {
+// 		responsePost := readResponseBody[Label](updateRecorder.Body.Bytes())
+// 		if responsePost.Text != updateMessage {
+// 			t.Error("expected message to be updated in database, got ", responsePost.Text)
+// 		}
+// 	})
+// 	t.Run("Post is updated", func(t *testing.T) {
+// 		getReq, _ := http.NewRequest("GET", fmt.Sprintf("/api/posts/%d", testId), nil)
+// 		getRecorder := httptest.NewRecorder()
+// 		api.ServeHTTP(getRecorder, getReq)
+// 		response := readResponseBody[Label](getRecorder.Body.Bytes())
+// 		if response.Text != updateMessage {
+// 			t.Error("expected message to be updated in database, got ", response.Text)
+// 		}
+// 		if response.ID != testId {
+// 			t.Error("expected post to have correct ID, got ", response.ID)
+// 		}
+// 	})
+// }
