@@ -12,15 +12,20 @@ import (
 
 func main() {
 	db := initializeDB()
-	api := gin.Default()
+	api := setupRoutes(db)
 	api.Use(cors.Default())
 	api.Use(gin.Recovery())
+	log.Fatal(api.Run())
+}
+
+func setupRoutes(db *gorm.DB) *gin.Engine {
+	api := gin.Default()
 	api.GET("/api/posts", makeHandler(db, getPosts))
 	api.POST("/api/posts", makeHandler(db, createPost))
 	api.GET("/api/posts/:id", makeHandler(db, getPost))
 	api.PUT("/api/posts/:id", makeHandler(db, updatePost))
 	api.DELETE("/api/posts/:id", makeHandler(db, deletePost))
-	log.Fatal(api.Run())
+	return api
 }
 
 func initializeDB() *gorm.DB {

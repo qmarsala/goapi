@@ -11,7 +11,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -72,13 +71,10 @@ func TestMain(t *testing.M) {
 }
 
 func TestGetPosts(t *testing.T) {
-	rPath := "/posts"
-	router := gin.Default()
-	router.GET(rPath, makeHandler(testDb, getPosts))
-
-	req, _ := http.NewRequest("GET", rPath, nil)
+	api := setupRoutes(testDb)
+	req, _ := http.NewRequest("GET", "/api/posts", nil)
 	recorder := httptest.NewRecorder()
-	router.ServeHTTP(recorder, req)
+	api.ServeHTTP(recorder, req)
 
 	t.Run("Returns 200 status code", func(t *testing.T) {
 		if recorder.Code != 200 {
@@ -95,13 +91,10 @@ func TestGetPosts(t *testing.T) {
 }
 
 func TestGetPost(t *testing.T) {
-	rPath := "/posts/:id"
-	router := gin.Default()
-	router.GET(rPath, makeHandler(testDb, getPost))
-
-	req, _ := http.NewRequest("GET", fmt.Sprintf("/posts/%d", 1), nil)
+	api := setupRoutes(testDb)
+	req, _ := http.NewRequest("GET", fmt.Sprintf("/api/posts/%d", 1), nil)
 	recorder := httptest.NewRecorder()
-	router.ServeHTTP(recorder, req)
+	api.ServeHTTP(recorder, req)
 
 	t.Run("Returns 200 status code", func(t *testing.T) {
 		if recorder.Code != 200 {
@@ -121,16 +114,14 @@ func TestGetPost(t *testing.T) {
 }
 
 func TestCreatePost(t *testing.T) {
-	rPath := "/posts"
-	router := gin.Default()
-	router.POST(rPath, makeHandler(testDb, createPost))
+	api := setupRoutes(testDb)
 	rPost := Post{
 		Message: "Testing Create Post",
 	}
-	req, _ := createJsonRequest("POST", rPath, rPost)
+	req, _ := createJsonRequest("POST", "/api/posts", rPost)
 	recorder := httptest.NewRecorder()
 
-	router.ServeHTTP(recorder, req)
+	api.ServeHTTP(recorder, req)
 	post := readResponseBody[Post](recorder.Body.Bytes())
 	defer testDb.Model(post).Delete(post)
 
@@ -150,20 +141,17 @@ func TestCreatePost(t *testing.T) {
 }
 
 func TestDeletePost(t *testing.T) {
-	rPath := "/posts/:id"
-	router := gin.Default()
-	router.DELETE(rPath, makeHandler(testDb, deletePost))
-	router.GET(rPath, makeHandler(testDb, getPost))
+	api := setupRoutes(testDb)
 	testId := uint(1000)
 	testPost := Post{
 		ID:      testId,
 		Message: "To Be Deleted",
 	}
 	testDb.Model(testPost).Create(&testPost)
-	delReq, _ := http.NewRequest("DELETE", fmt.Sprintf("/posts/%d", testId), nil)
+	delReq, _ := http.NewRequest("DELETE", fmt.Sprintf("/api/posts/%d", testId), nil)
 	delRecorder := httptest.NewRecorder()
 
-	router.ServeHTTP(delRecorder, delReq)
+	api.ServeHTTP(delRecorder, delReq)
 
 	t.Run("Returns 204 status code", func(t *testing.T) {
 		if delRecorder.Code != 204 {
@@ -171,9 +159,9 @@ func TestDeletePost(t *testing.T) {
 		}
 	})
 	t.Run("Post is deleted", func(t *testing.T) {
-		getReq, _ := http.NewRequest("GET", fmt.Sprintf("/posts/%d", testId), nil)
+		getReq, _ := http.NewRequest("GET", fmt.Sprintf("/api/posts/%d", testId), nil)
 		getRecorder := httptest.NewRecorder()
-		router.ServeHTTP(getRecorder, getReq)
+		api.ServeHTTP(getRecorder, getReq)
 		if getRecorder.Code != 404 {
 			t.Error("Expected 404, got ", getRecorder.Code)
 		}
@@ -181,10 +169,7 @@ func TestDeletePost(t *testing.T) {
 }
 
 func TestUpdatePost(t *testing.T) {
-	rPath := "/posts/:id"
-	router := gin.Default()
-	router.PUT(rPath, makeHandler(testDb, updatePost))
-	router.GET(rPath, makeHandler(testDb, getPost))
+	api := setupRoutes(testDb)
 	testId := uint(2000)
 	testPost := Post{
 		ID:      testId,
@@ -198,9 +183,9 @@ func TestUpdatePost(t *testing.T) {
 		ID:      testId,
 		Message: updateMessage,
 	}
-	updateReq, _ := createJsonRequest("PUT", fmt.Sprintf("/posts/%d", testId), updatedPost)
+	updateReq, _ := createJsonRequest("PUT", fmt.Sprintf("/api/posts/%d", testId), updatedPost)
 	updateRecorder := httptest.NewRecorder()
-	router.ServeHTTP(updateRecorder, updateReq)
+	api.ServeHTTP(updateRecorder, updateReq)
 
 	t.Run("Returns 200 status code", func(t *testing.T) {
 		if updateRecorder.Code != 200 {
@@ -214,9 +199,9 @@ func TestUpdatePost(t *testing.T) {
 		}
 	})
 	t.Run("Post is updated", func(t *testing.T) {
-		getReq, _ := http.NewRequest("GET", fmt.Sprintf("/posts/%d", testId), nil)
+		getReq, _ := http.NewRequest("GET", fmt.Sprintf("/api/posts/%d", testId), nil)
 		getRecorder := httptest.NewRecorder()
-		router.ServeHTTP(getRecorder, getReq)
+		api.ServeHTTP(getRecorder, getReq)
 		response := readResponseBody[Post](getRecorder.Body.Bytes())
 		if response.Message != updateMessage {
 			t.Error("expected message to be updated in database, got ", response.Message)
