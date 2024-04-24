@@ -71,7 +71,7 @@ func TestMain(t *testing.M) {
 	os.Exit(code)
 }
 
-func TestGetPosts(t *testing.T) {
+func TestGetLabels(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/api/labels", nil)
 	recorder := httptest.NewRecorder()
 	api.ServeHTTP(recorder, req)
@@ -90,7 +90,7 @@ func TestGetPosts(t *testing.T) {
 	})
 }
 
-func TestGetPost(t *testing.T) {
+func TestGetLabel(t *testing.T) {
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/api/labels/%d", 1), nil)
 	recorder := httptest.NewRecorder()
 	api.ServeHTTP(recorder, req)
