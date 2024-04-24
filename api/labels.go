@@ -46,7 +46,7 @@ func getPosts(db *gorm.DB, c *gin.Context) {
 	}
 }
 
-func getPost(db *gorm.DB, c *gin.Context) {
+func getLabel(db *gorm.DB, c *gin.Context) {
 	var getPostRequest GetLabelRequest
 	if err := c.ShouldBindUri(&getPostRequest); err != nil {
 		c.JSON(400, gin.H{"msg": err})

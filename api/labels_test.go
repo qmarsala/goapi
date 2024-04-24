@@ -91,7 +91,7 @@ func TestGetPosts(t *testing.T) {
 }
 
 func TestGetPost(t *testing.T) {
-	req, _ := http.NewRequest("GET", fmt.Sprintf("/api/posts/%d", 1), nil)
+	req, _ := http.NewRequest("GET", fmt.Sprintf("/api/labels/%d", 1), nil)
 	recorder := httptest.NewRecorder()
 	api.ServeHTTP(recorder, req)
 
@@ -101,13 +101,13 @@ func TestGetPost(t *testing.T) {
 		}
 	})
 
-	t.Run("Returns post", func(t *testing.T) {
-		post := readResponseBody[Label](recorder.Body.Bytes())
-		if len(post.Text) < 1 {
-			t.Error("Expected post with a message, message is empty ", post.Text)
+	t.Run("Returns label", func(t *testing.T) {
+		label := readResponseBody[Label](recorder.Body.Bytes())
+		if len(label.Text) < 1 {
+			t.Error("Expected label with a text, text is empty ", label.Text)
 		}
-		if post.ID < 1 {
-			t.Error("Expected post with an ID, ID is 0 ", post.Text)
+		if label.ID < 1 {
+			t.Error("Expected label with an ID, ID is 0 ", label.Text)
 		}
 	})
 }

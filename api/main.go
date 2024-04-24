@@ -36,7 +36,7 @@ func setupRoutes(db *gorm.DB) *gin.Engine {
 	api := gin.Default()
 	api.GET("/api/posts", makeHandler(db, getPosts))
 	api.POST("/api/posts", makeHandler(db, createPost))
-	api.GET("/api/posts/:id", makeHandler(db, getPost))
+	api.GET("/api/labels/:id", makeHandler(db, getLabel))
 	api.PUT("/api/posts/:id", makeHandler(db, updatePost))
 	api.DELETE("/api/posts/:id", makeHandler(db, deletePost))
 	return api
