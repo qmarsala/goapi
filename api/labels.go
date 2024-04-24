@@ -37,7 +37,7 @@ func getPostById(db *gorm.DB, id uint) (*Label, error) {
 	return &p, nil
 }
 
-func getPosts(db *gorm.DB, c *gin.Context) {
+func getLabels(db *gorm.DB, c *gin.Context) {
 	posts := []Label{}
 	if tx := db.Limit(25).Find(&posts); tx.Error != nil {
 		c.Status(500)

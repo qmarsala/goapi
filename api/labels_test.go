@@ -72,7 +72,7 @@ func TestMain(t *testing.M) {
 }
 
 func TestGetPosts(t *testing.T) {
-	req, _ := http.NewRequest("GET", "/api/posts", nil)
+	req, _ := http.NewRequest("GET", "/api/labels", nil)
 	recorder := httptest.NewRecorder()
 	api.ServeHTTP(recorder, req)
 

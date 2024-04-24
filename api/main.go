@@ -34,7 +34,7 @@ func connectDB(dbName string) *gorm.DB {
 
 func setupRoutes(db *gorm.DB) *gin.Engine {
 	api := gin.Default()
-	api.GET("/api/posts", makeHandler(db, getPosts))
+	api.GET("/api/labels", makeHandler(db, getLabels))
 	api.POST("/api/posts", makeHandler(db, createPost))
 	api.GET("/api/labels/:id", makeHandler(db, getLabel))
 	api.PUT("/api/posts/:id", makeHandler(db, updatePost))
