@@ -4,7 +4,7 @@ function App() {
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    fetch('http://localhost:8080/api/posts')
+    fetch('http://localhost:8080/api/labels')
       .then(response => response.json())
       .then(json => setData(json))
       .catch(error => console.error(error));
