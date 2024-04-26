@@ -16,18 +16,18 @@ type GetLabelRequest struct {
 type UpdateLabelRequest struct {
 	ID     uint   `uri:"id" binding:"required"`
 	Text   string `json:"text" binding:"required"`
-	Target string `json:"string" binding:"required"`
+	Target string `json:"target" binding:"required"`
 }
 
 type CreateLabelRequest struct {
 	Text   string `json:"text"`
-	Target string `json:"string" binding:"required"`
+	Target string `json:"target" binding:"required"`
 }
 
 type Label struct {
 	ID     uint   `json:"id" gorm:"primarykey"`
 	Text   string `json:"text"`
-	Target string `json:"string"`
+	Target string `json:"target"`
 }
 
 func getPostById(db *gorm.DB, id uint) (*Label, error) {

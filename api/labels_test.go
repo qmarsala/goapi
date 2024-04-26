@@ -59,15 +59,16 @@ func readResponseBody[T Label | LabelsResponse](bytes []byte) *T {
 
 func TestMain(t *testing.M) {
 	testDb = initializeDB[Label]("test")
-	api = setupRoutes(testDb)
-	posts := []Label{
+	api = gin.Default()
+	setupRoutes(api, testDb)
+	labels := []Label{
 		{ID: 1, Text: "Hello!", Target: "dog"},
 		{ID: 2, Text: "Hello, Go!", Target: "cat"},
 		{ID: 3, Text: "Hello, World!", Target: "bird"},
 	}
-	insertedPosts := seedDB(posts)
+	insertedLabels := seedDB(labels)
 	code := t.Run()
-	cleanupSeedDB(insertedPosts)
+	cleanupSeedDB(insertedLabels)
 	os.Exit(code)
 }
 
@@ -83,9 +84,9 @@ func TestGetLabels(t *testing.T) {
 	})
 
 	t.Run("Returns list of posts", func(t *testing.T) {
-		postsResponse := readResponseBody[LabelsResponse](recorder.Body.Bytes())
-		if len(postsResponse.Labels) < 1 {
-			t.Error("Expected at least 1 post, got 0 ", postsResponse.Labels)
+		labelsResponse := readResponseBody[LabelsResponse](recorder.Body.Bytes())
+		if len(labelsResponse.Labels) < 1 {
+			t.Error("Expected at least 1 post, got 0 ", labelsResponse.Labels)
 		}
 	})
 }

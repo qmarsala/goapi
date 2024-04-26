@@ -1,9 +1,10 @@
-POST http://localhost:8080/api/posts/
+POST http://localhost:8080/api/labels/
 Content-Type: application/json
 Accept: application/json
 
 {
-    "Message": "Testing api!!"
+    "text": "Testing api!!",
+    "target": "Testing api!!"
 }
 
 ###

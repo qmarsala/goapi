@@ -12,9 +12,9 @@ import (
 
 func main() {
 	db := initializeDB[Label]("api")
-	api := setupRoutes(db)
+	api := gin.Default()
 	api.Use(cors.Default())
-	api.Use(gin.Recovery())
+	setupRoutes(api, db)
 	log.Fatal(api.Run())
 }
 
@@ -32,14 +32,12 @@ func connectDB(dbName string) *gorm.DB {
 	return db
 }
 
-func setupRoutes(db *gorm.DB) *gin.Engine {
-	api := gin.Default()
+func setupRoutes(api *gin.Engine, db *gorm.DB) {
 	api.GET("/api/labels", makeHandler(db, getLabels))
 	api.POST("/api/labels", makeHandler(db, createLabel))
 	api.GET("/api/labels/:id", makeHandler(db, getLabel))
-	api.PUT("/api/posts/:id", makeHandler(db, updatePost))
-	api.DELETE("/api/posts/:id", makeHandler(db, deletePost))
-	return api
+	api.PUT("/api/labels/:id", makeHandler(db, updatePost))
+	api.DELETE("/api/labels/:id", makeHandler(db, deletePost))
 }
 
 func makeHandler(db *gorm.DB, fn func(*gorm.DB, *gin.Context)) gin.HandlerFunc {
