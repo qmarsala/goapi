@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type LabelsResponse struct {
@@ -30,7 +29,7 @@ type Label struct {
 	Target string `json:"target"`
 }
 
-func getPostById(db *gorm.DB, id uint) (*Label, error) {
+func getPostById(db Database, id uint) (*Label, error) {
 	p := Label{}
 	if tx := db.Limit(1).Find(&p, id); tx.Error != nil {
 		return nil, tx.Error
@@ -40,7 +39,7 @@ func getPostById(db *gorm.DB, id uint) (*Label, error) {
 	return &p, nil
 }
 
-func getLabels(db *gorm.DB, c *gin.Context) {
+func getLabels(db Database, c *gin.Context) {
 	posts := []Label{}
 	if tx := db.Limit(25).Find(&posts); tx.Error != nil {
 		c.Status(500)
@@ -49,7 +48,7 @@ func getLabels(db *gorm.DB, c *gin.Context) {
 	}
 }
 
-func getLabel(db *gorm.DB, c *gin.Context) {
+func getLabel(db Database, c *gin.Context) {
 	var getPostRequest GetLabelRequest
 	if err := c.ShouldBindUri(&getPostRequest); err != nil {
 		c.JSON(400, gin.H{"msg": err})
@@ -67,7 +66,7 @@ func getLabel(db *gorm.DB, c *gin.Context) {
 	}
 }
 
-func createLabel(db *gorm.DB, c *gin.Context) {
+func createLabel(db Database, c *gin.Context) {
 	var createPostRequest CreateLabelRequest
 	if err := c.ShouldBind(&createPostRequest); err != nil {
 		c.JSON(400, gin.H{"msg": err})
@@ -85,7 +84,7 @@ func createLabel(db *gorm.DB, c *gin.Context) {
 	}
 }
 
-func updatePost(db *gorm.DB, c *gin.Context) {
+func updatePost(db Database, c *gin.Context) {
 	var update UpdateLabelRequest
 	if err := c.ShouldBind(&update); err != nil {
 		c.JSON(400, gin.H{"msg": err})
@@ -106,7 +105,7 @@ func updatePost(db *gorm.DB, c *gin.Context) {
 	}
 }
 
-func deletePost(db *gorm.DB, c *gin.Context) {
+func deletePost(db Database, c *gin.Context) {
 	var getPostRequest GetLabelRequest
 	if err := c.ShouldBindUri(&getPostRequest); err != nil {
 		c.JSON(400, gin.H{"msg": err})
